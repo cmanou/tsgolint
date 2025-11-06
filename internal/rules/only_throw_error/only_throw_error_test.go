@@ -171,8 +171,6 @@ throw new Map();
         import { createError } from 'errors';
         throw createError();
       `,
-			// TODO(port): type_matches_specifier doesn't support this yet
-			Skip: true,
 			Options: OnlyThrowErrorOptions{
 				Allow:                []utils.TypeOrValueSpecifier{{From: utils.TypeOrValueSpecifierFromPackage, Name: []string{"ErrorLike"}, Package: "errors"}},
 				AllowThrowingAny:     utils.Ref(false),

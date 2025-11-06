@@ -115,28 +115,32 @@ func typeDeclaredInDeclarationFile(
 	declarationFiles []*ast.SourceFile,
 	program *compiler.Program,
 ) bool {
-	// typesPackageName := ""
-	//  // Handle scoped packages: if the name starts with @, remove it and replace / with __
-	// slashIndex := strings.Index(packageName, "/")
-	// if packageName[0] == '@' && slashIndex >= 0 {
-	// 	typesPackageName = packageName[1:slashIndex] + "__" + packageName[slashIndex+1:]
-	// }
+	typesPackageName := ""
+	// Handle scoped packages: if the name starts with @, remove it and replace / with __
+	slashIndex := strings.Index(packageName, "/")
+	if packageName[0] == '@' && slashIndex >= 0 {
+		typesPackageName = packageName[1:slashIndex] + "__" + packageName[slashIndex+1:]
+	}
 
-	// TODO(port): there is no sourceFileToPackageName anymore
-	// it looks like there is no other way to know sourceFile2PackageName,
-	// other than set package name for ast.SourceFile in resolver
+	resolvedModules := program.GetResolvedModules()
+	return Some(declarationFiles, func(df *ast.SourceFile) bool {
+		if !program.IsSourceFileFromExternalLibrary(df) {
+			return false
+		}
 
-	return false
-
-	// const matcher = new RegExp(`${packageName}|${typesPackageName}`);
-	// return declarationFiles.some(declaration => {
-	//   const packageIdName = program.sourceFileToPackageName.get(declaration.path);
-	//   return (
-	//     packageIdName != null &&
-	//     matcher.test(packageIdName) &&
-	//     program.isSourceFileFromExternalLibrary(declaration)
-	//   );
-	// });
+		resolutions := resolvedModules[df.Path()]
+		for _, resolution := range resolutions {
+			if resolution == nil {
+				continue
+			}
+			packageIdName := resolution.PackageId.Name
+			if packageIdName != "" &&
+				(packageIdName == packageName || packageIdName == typesPackageName) {
+				return true
+			}
+		}
+		return false
+	})
 }
 
 func typeDeclaredInPackageDeclarationFile(
